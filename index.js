@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 
 // middleware
@@ -18,9 +18,27 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run(){
     try{
         const userCollection = client.db('assignment-12-DB').collection('user')
+        const categoryCollections = client.db('assignment-12-DB').collection('categoriesOfProduct')
+        const buyerCollections = client.db('assignment-12-DB').collection('buyer')
+        app.get('/category', async(req,res)=>{
+            const query = {}
+            const category = await categoryCollections.find(query).toArray()
+            res.send(category)
+        })
+        app.get('/category/:id', async(req,res)=>{
+            const id = req.params.id
+            const query = {_id : ObjectId(id)}
+            const result = await categoryCollections.findOne(query)
+            res.send(result)
+        })
         app.post('/users', async(req,res)=>{
             const user = req.body;
             const result = await userCollection.insertOne(user)
+            res.send(result)
+        })
+        app.post('/buyer', async(req,res)=>{
+            const buyer = req.body;
+            const result = await buyerCollections.insertOne(buyer);
             res.send(result)
         })
     }
