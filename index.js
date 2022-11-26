@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId, ObjectID } = require('mongodb');
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
 
@@ -71,6 +71,20 @@ async function run(){
             res.send(result)   
 
         })
+
+        app.put('/users/admin/:id',async(req,res)=>{
+            const id = req.params.id;
+            const filter = {_id : ObjectId(id)}
+            const options = {upsert : true};
+            const updatedDoc = {
+                $set:{
+                    role : 'admin'
+                }
+            }
+            const result = await userCollection.updateOne(filter,updatedDoc,options)
+            res.send(result)
+        })
+
         app.post('/buyer', async(req,res)=>{
             const buyer = req.body;
             const result = await buyerCollections.insertOne(buyer);
