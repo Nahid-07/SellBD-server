@@ -91,6 +91,16 @@ async function run(){
             }
             res.status(403).send({ accessToken: '' })
         });
+        app.get('/myorders',verifyJWT, async(req,res)=>{
+            const email = req.query.email;
+            const decodedEmail = req.decoded.email;
+            if(decodedEmail !== email){
+                return res.status(403).send({message : 'forbidden access'})
+            }
+            const query = {email : email}
+            const result = await buyerCollections.find(query).toArray()
+            res.send(result)
+        })
     }
     finally{
 
