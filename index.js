@@ -114,7 +114,22 @@ async function run(){
             res.send(buyer)
         })
 
+        // seller delete api
+        app.delete('/allseller/:id',async(req,res)=>{
+            const id = req.params.id;
+            const query = {_id : ObjectId(id)}
+            const deletedSeller = await userCollection.deleteOne(query);
+            res.send(deletedSeller)
+        })
 
+        // delete buyer api
+        app.delete('/allbuyer/:id',async(req,res)=>{
+            const id = req.params.id;
+            console.log(id);
+            const query = {_id : ObjectId(id)};
+            const deletedBuyer = await userCollection.deleteOne(query);
+            res.send(deletedBuyer)
+        })
         app.post('/buyer', async(req,res)=>{
             const buyer = req.body;
             const result = await buyerCollections.insertOne(buyer);
