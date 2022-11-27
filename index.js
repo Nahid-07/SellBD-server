@@ -72,7 +72,22 @@ async function run(){
 
         })
 
-        app.put('/users/admin/:id',async(req,res)=>{
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await userCollection.findOne(query);
+            res.send({ isAdmin: user?.role === 'admin' });
+        })
+
+        app.put('/users/admin/:id',verifyJWT,async(req,res)=>{
+            const decodedEmail = req.decoded.email;
+            const query = {email : decodedEmail}
+            const user = await userCollection.findOne(query)
+
+            if(user?.role !== 'admin'){
+                return res.status(403).send({message: 'access denied'})
+            }
+
             const id = req.params.id;
             const filter = {_id : ObjectId(id)}
             const options = {upsert : true};
@@ -83,6 +98,12 @@ async function run(){
             }
             const result = await userCollection.updateOne(filter,updatedDoc,options)
             res.send(result)
+        })
+
+        app.get('/users/seller',async(req,res)=>{
+            const query = { userType : 'Seller' }
+            const user = await userCollection.find(query).toArray()
+            res.send(user)
         })
 
         app.post('/buyer', async(req,res)=>{
