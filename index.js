@@ -2,8 +2,9 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion, ObjectId, ObjectID } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken')
+const stripe = require("stripe")('sk_test_51M663EI0d7d7hgOsq1dJvhUdwUvG0N9xucJ6cLJLKMiui8WAq248xGm5tP384UdlrARL2FqrC0oW4n3HZU7NTl4100YCGHNPvy');
 require('dotenv').config()
 
 // middleware
@@ -41,7 +42,8 @@ async function run(){
         const userCollection = client.db('assignment-12-DB').collection('user')
         const categoryCollections = client.db('assignment-12-DB').collection('categoriesOfProduct');
         const productCollections = client.db('assignment-12-DB').collection('products')
-        const buyerCollections = client.db('assignment-12-DB').collection('buyer')
+        const bookingCollections = client.db('assignment-12-DB').collection('buyer')
+        const paymentsCollection = client.db('assignment-12-DB').collection('payment')
         //  home page category api
         app.get('/category', async(req,res)=>{
             const query = {}
@@ -79,6 +81,12 @@ async function run(){
             const query = { email }
             const user = await userCollection.findOne(query);
             res.send({ isAdmin: user?.role === 'admin' });
+        })
+        app.get('/users/seller/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await userCollection.findOne(query);
+            res.send({ isAdmin: user?.userType === 'Seller' });
         })
 
         app.put('/users/admin/:id',verifyJWT,async(req,res)=>{
@@ -132,12 +140,12 @@ async function run(){
         })
         app.post('/buyer', async(req,res)=>{
             const buyer = req.body;
-            const result = await buyerCollections.insertOne(buyer);
+            const result = await bookingCollections.insertOne(buyer);
             res.send(result)
         })
         app.get('/buyer', async(req,res)=>{
             const query ={};
-            const buyers = await buyerCollections.find(query).toArray()
+            const buyers = await bookingCollections.find(query).toArray()
             res.send(buyers)
         })
         app.get('/jwt', async (req, res) => {
@@ -157,9 +165,49 @@ async function run(){
                 return res.status(403).send({message : 'forbidden access'})
             }
             const query = {email : email}
-            const result = await buyerCollections.find(query).toArray()
+            const result = await bookingCollections.find(query).toArray()
             res.send(result)
         })
+        app.get('/bookings/:id',async(req,res)=>{
+            const id = req.params.id;
+            const query = {_id : ObjectId(id)}
+            const result = await bookingCollections.findOne(query)
+            res.send(result)
+        })
+
+        // payment api
+        app.post('/create-payment-intent', async (req, res) => {
+            const product = req.body;
+            const price = product.price;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                "payment_method_types": [
+                    "card"
+                ]
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        });
+
+        app.post('/payments', async (req, res) =>{
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment);
+            const id = payment.bookingId
+            const filter = {_id: ObjectId(id)}
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+            const updatedResult = await bookingCollections.updateOne(filter, updatedDoc)
+            res.send(result);
+        })
+
     }
     finally{
 
