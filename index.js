@@ -42,17 +42,19 @@ async function run(){
         const categoryCollections = client.db('assignment-12-DB').collection('categoriesOfProduct');
         const productCollections = client.db('assignment-12-DB').collection('products')
         const buyerCollections = client.db('assignment-12-DB').collection('buyer')
-        
+        //  home page category api
         app.get('/category', async(req,res)=>{
             const query = {}
             const category = await categoryCollections.find(query).toArray()
             res.send(category)
         })
+        // inside category product api
         app.post('/product',async(req,res)=>{
             const product = req.body
             const result = await productCollections.insertOne(product);
             res.send(result)
         })
+        // get product via id api
         app.get('/category/:id', async(req,res)=>{
             const id = req.params.id;
             // const query = {i}
@@ -102,9 +104,16 @@ async function run(){
 
         app.get('/users/seller',async(req,res)=>{
             const query = { userType : 'Seller' }
-            const user = await userCollection.find(query).toArray()
-            res.send(user)
+            const seller = await userCollection.find(query).toArray()
+            res.send(seller)
         })
+
+        app.get('/users/buyer', async(req,res)=>{
+            const query = {userType : 'Buyer'}
+            const buyer = await userCollection.find(query).toArray();
+            res.send(buyer)
+        })
+
 
         app.post('/buyer', async(req,res)=>{
             const buyer = req.body;
