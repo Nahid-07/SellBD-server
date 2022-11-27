@@ -251,6 +251,22 @@ async function run() {
       );
       res.send(result);
     });
+
+    app.get('/myproduct/:email',async(req,res)=>{
+        const email = req.params.email;
+        const query = {email}
+        const result = await productCollections.find(query).toArray();
+        res.send(result)
+    })
+
+    // delete my product 
+    app.delete('/myproduct/:id',async(req,res)=>{
+        const id = req.params.id;
+        const query = {_id : ObjectId(id)}
+        const result = await productCollections.deleteOne(query);
+        res.send(result)
+    })
+
   } finally {
   }
 }
