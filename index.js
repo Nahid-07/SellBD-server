@@ -56,6 +56,7 @@ async function run() {
     const paymentsCollection = client
       .db("assignment-12-DB")
       .collection("payment");
+      const advertiseCollection = client.db('assignment-12-DB').collection('adverties')
     //  home page category api
     app.get("/category", async (req, res) => {
       const query = {};
@@ -69,9 +70,20 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/products", async (req, res) => {
-      const query = {};
-      const result = await productCollections.find(query).toArray();
+    app.post("/products/adverties", async (req, res) => {
+      const pd = req.body;
+      const result = await advertiseCollection.insertOne(pd);
+      res.send(result);
+    });
+    app.get("/products/adverties", async (req, res) => {
+      const query = {}
+      const result = await advertiseCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.delete("/product/adverties/:id", async (req, res) => {
+      const id = req.params.id
+      const query = {_id : id}
+      const result = await advertiseCollection.deleteOne(query);
       res.send(result);
     });
     // get product via id api
@@ -122,6 +134,30 @@ async function run() {
         },
       };
       const result = await userCollection.updateOne(
+        filter,
+        updatedDoc,
+        options
+      );
+      res.send(result);
+    });
+    app.put("/users/verify/:id", verifyJWT, async (req, res) => {
+      const decodedEmail = req.decoded.email;
+      const query = { email: decodedEmail };
+      const user = await userCollection.findOne(query);
+
+      if (user?.role !== "admin") {
+        return res.status(403).send({ message: "access denied" });
+      }
+
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          userStatus: "Verified",
+        },
+      };
+      const result = await productCollections.updateOne(
         filter,
         updatedDoc,
         options
